@@ -1,0 +1,48 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python CI Pipeline - Checking Test Cases
+
+on:
+  # this workflow gets triggered when any pull request is created to the mentioned branches
+  pull_request:
+  # this workflow gets triggered when manually made to run from action tab
+  workflow_dispatch:
+
+jobs:
+  running-test-cases:
+    
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        python-version: ["3.9.x", "3.10.x", "3.11.x"]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    # Checkout the repository to the runner
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    # Set up the python environment
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    # Install the poetry to get the required dependencies
+    - name: Install poetry
+      run: |
+        # install poetry
+        pip install poetry
+        poetry install --no-root
+    
+    # Checking for errors and warnings in the code with Pylint, Flake8, and Black
+    - name: Lint Code Base with Pylint, Flake8, and Black
+      run: bash .github/workflows/run_python_linter.sh
+      shell: bash
+
+    # If the test files are present, then run the test files and push or merge the changes
+    # Else Skip the test case and push or merge the changes
+    - name: Run Test Cases with pytest
+      run: bash .github/workflows/run_python_pytest.sh
+      shell: bash
